@@ -28,13 +28,15 @@ const LATITUDE = 37.78825;
 const LONGITUDE = -122.4324;
 const LATITUDE_DELTA = 0.0022;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
-var id = 0;LATITUDE_DELTA * ASPECT_RATIO
+var id = 0; LATITUDE_DELTA * ASPECT_RATIO
 
 class App extends React.Component {
   constructor(props) {
     super(props);
+    this.mapRef = null;
 
     this.state = {
+      receivedPathCoords: [],
       latitude: LATITUDE,
       longitude: LONGITUDE,
       latitudeDelta: LATITUDE_DELTA,
@@ -54,12 +56,19 @@ class App extends React.Component {
           longitude: 79.953570,
         },
         key: id
-      } 
+      }
     };
     this.handlePress = this.handlePress.bind(this);
   }
 
+  callbackCoordinates = (coordsToDestination) => {
+    this.setState({ receivedPathCoords: coordsToDestination })
+    console.log("child data", this.state.receivedPathCoords);
+    this.onLayout();
+  }
+
   handlePress(e) {
+    console.log("handle press");
     this.setState({
       destinationMarker:
       {
@@ -67,12 +76,15 @@ class App extends React.Component {
         key: ++id
       },
     });
-    console.log("desLat", this.state.destinationMarker.coordinate.latitude)
-    console.log("desLon", this.state.destinationMarker.coordinate.longitude)
+    
+    
+    // console.log("desLat", this.state.destinationMarker.coordinate.latitude)
+    // console.log("desLon", this.state.destinationMarker.coordinate.longitude)
   }
 
   componentDidMount() {
     const { coordinate } = this.state;
+    console.log("componentdidmount start");
 
     this.watchID = Geolocation.watchPosition(
       position => {
@@ -91,6 +103,7 @@ class App extends React.Component {
               100
             );
           }
+          console.log("marker point");
         } else {
           coordinate.timing(newCoordinate).start();
         }
@@ -103,8 +116,8 @@ class App extends React.Component {
             distanceTravelled + this.calcDistance(newCoordinate),
           prevLatLng: newCoordinate
         });
-        console.log("oriLat", latitude)
-        console.log("oriLon", longitude)
+        // console.log("oriLat", latitude)
+        // console.log("oriLon", longitude)
       },
       error => console.log(error),
       {
@@ -114,11 +127,12 @@ class App extends React.Component {
         distanceFilter: 10
       }
     );
-    
+
   }
 
   componentWillUnmount() {
     Geolocation.clearWatch(this.watchID);
+    console.log("componentwillunmount");
   }
 
   getMapRegion = () => ({
@@ -133,25 +147,27 @@ class App extends React.Component {
     return haversine(prevLatLng, newLatLng) || 0;
   };
 
+  onLayout = () => { setTimeout(() => { 
+    this.map.fitToCoordinates(this.state.receivedPathCoords,
+      { edgePadding: { top: 500, right: 500, bottom: 500, left: 500 }, animated: true, }); 
+    }, 2000); 
+    console.log("onLayout function");}
+
   render() {
+    console.log("APPJS render");
     return (
       <View style={styles.container}>
         <MapView
           style={styles.map}
+          ref={map => { this.map = map }}
+          // onMapReady={this.onLayout}
+          // onLayout={() => this.mapRef.fitToCoordinates([{ latitude: 6.79738, longitude: 79.90183 }, { latitude: 6.80128, longitude: 79.90113 }], { edgePadding: { top: 10, right: 10, bottom: 10, left: 10 }, animated: true })}
           provider={PROVIDER_GOOGLE}
           showUserLocation
           followUserLocation
           loadingEnabled
-          region={this.getMapRegion()}
-          onPress = {this.handlePress}
-          fitToElements ={true}
-          // onRegionChange={region => {
-          //   clearTimeout(this.timerForMap)
-          //   this.timerForMap = setTimeout(() => {
-          //     this.showMarkers(region)
-          //   }, 100)
-          // }}
-          
+          region={(id > 0) ? null : this.getMapRegion()}
+          onPress={this.handlePress}
         >
           <Polyline coordinates={this.state.routeCoordinates} strokeWidth={5} />
           <Marker.Animated
@@ -160,7 +176,7 @@ class App extends React.Component {
             }}
             coordinate={this.state.coordinate}
           />
-          {(id>0) 
+          {(id > 0)
             ? [<Marker.Animated
               key={this.state.destinationMarker.key}
               coordinate={this.state.destinationMarker.coordinate}
@@ -172,7 +188,8 @@ class App extends React.Component {
               <Image source={require('./images/markers/mapMarker.png')} style={{ height: 35, width: 35 }} />
             </Marker.Animated>,
             <Destination
-              key={this.state.destinationMarker.key-1}
+              pathCoordsCallback={this.callbackCoordinates}
+              key={this.state.destinationMarker.key - 1}
               originLatitude={this.state.latitude}
               originLongitude={this.state.longitude}
               destinationLatitude={this.state.destinationMarker.coordinate.latitude}
@@ -191,12 +208,6 @@ class App extends React.Component {
           <TouchableOpacity style={[styles.bubble, styles.button]}>
             <Text style={styles.bottomBarContent}>
               {JSON.stringify(this.state.routeCoordinates)}</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={[styles.bubble, styles.button]}>
-            <Text style={styles.bottomBarContent}>
-              {JSON.stringify(this.state.destinationMarker.coordinate)}</Text>
           </TouchableOpacity>
         </View>
       </View>

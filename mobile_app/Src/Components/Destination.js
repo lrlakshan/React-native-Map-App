@@ -68,6 +68,7 @@ class Destination extends React.Component {
 
     componentDidMount() {
         this.getRout();
+        console.log("Child componentdidmount");
     }
 
     getRout = () => {
@@ -79,20 +80,30 @@ class Destination extends React.Component {
             .then(response => response.json())
             .then(responseJson => {
                 if (responseJson.routes.length) {
+                    console.log("fetch url");
+                    this.sendData(decode(responseJson.routes[0].overview_polyline.points));
                     // console.log('haaaaaaaaaa', responseJson);
-                    console.log('origin', originLatitude);
-                    console.log('origin', originLongitude);
+                    // console.log('origin', originLatitude);
+                    // console.log('origin', originLongitude);
+                    // this.sendData(decode(responseJson.routes[0].overview_polyline.points));
                     this.setState({
                         coords: decode(responseJson.routes[0].overview_polyline.points) // definition below
                     });
+                    console.log('haaa', decode(responseJson.routes[0].overview_polyline.points));
                 } else {
-                    console.log('baaaaaaaaaa', responseJson.routes);
+                    // console.log('baaaaaaaaaa', responseJson.routes);
                 }
             }).catch(e => { console.warn(e) });
     }
 
+    sendData = (pathCoords) => {
+        this.props.pathCoordsCallback(pathCoords);
+        console.log("send data");
+    }
+
 
     render() {
+        console.log("destinatinon render");
         return (
                 <MapView.Polyline
                     coordinates={[
