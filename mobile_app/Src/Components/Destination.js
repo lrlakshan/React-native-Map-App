@@ -21,6 +21,7 @@ const destination = '6.8478286932489585,79.95384380221367';
 const APIKEY = 'AIzaSyBGnTT2uj_Jj_p91WdJi__OiuRreC98hac';
 
 
+//path drawing algorithm 
 export function decode(t, e) {
     for (var n, o, u = 0, l = 0, r = 0, d = [], h = 0, i = 0,
         a = null, c = Math.pow(10, e || 5);
@@ -49,14 +50,6 @@ export function decode(t, e) {
         })
 }
 
-const initialRegion = {
-    latitude: 6.849836,
-    longitude: 79.952973,
-    latitudeDelta: 0.009,
-    longitudeDelta: 0.009
-}
-
-
 class Destination extends React.Component {
     constructor(props) {
         super(props);
@@ -71,6 +64,7 @@ class Destination extends React.Component {
         console.log("Child componentdidmount");
     }
 
+    //function to get the route from current location to user defined location
     getRout = () => {
 
         const { originLatitude, originLongitude, destinationLatitude, destinationLongitude } = this.props;
@@ -82,16 +76,11 @@ class Destination extends React.Component {
                 if (responseJson.routes.length) {
                     console.log("fetch url");
                     this.sendData(decode(responseJson.routes[0].overview_polyline.points));
-                    // console.log('haaaaaaaaaa', responseJson);
-                    // console.log('origin', originLatitude);
-                    // console.log('origin', originLongitude);
-                    // this.sendData(decode(responseJson.routes[0].overview_polyline.points));
                     this.setState({
-                        coords: decode(responseJson.routes[0].overview_polyline.points) // definition below
+                        coords: decode(responseJson.routes[0].overview_polyline.points) 
                     });
                     console.log('haaa', decode(responseJson.routes[0].overview_polyline.points));
                 } else {
-                    // console.log('baaaaaaaaaa', responseJson.routes);
                 }
             }).catch(e => { console.warn(e) });
     }
@@ -116,13 +105,5 @@ class Destination extends React.Component {
         );
     }
 }
-
-const styles = StyleSheet.create({
-    container: {
-        ...StyleSheet.absoluteFillObject,
-        justifyContent: "flex-end",
-        alignItems: "center"
-    },
-});
 
 export default Destination;

@@ -18,6 +18,9 @@ import MapView, {
 import haversine from "haversine";
 import Geolocation from "react-native-geolocation-service"
 import Destination from "./Src/Components/Destination"
+import Landmarks from "./Src/Components/Landmarks"
+import LandmarkButton from "./Src/Components/LandmarkButton"
+
 
 import destinationMarker from "./images/markers/mapMarker.png"
 
@@ -56,17 +59,26 @@ class App extends React.Component {
           longitude: 79.953570,
         },
         key: id
-      }
+      },
+      landmarkVeiw: false
     };
     this.handlePress = this.handlePress.bind(this);
   }
 
+  //callback data from Destination.js component
   callbackCoordinates = (coordsToDestination) => {
     this.setState({ receivedPathCoords: coordsToDestination })
     console.log("child data", this.state.receivedPathCoords);
     this.onLayout();
   }
 
+  //callback data from LandmarkButton.js component
+  callBackButtonClick = (clickEvent) => {
+    console.log("buttonProp", clickEvent);
+    this.setState({ landmarkVeiw: clickEvent })
+  }
+
+  //user destination press on map
   handlePress(e) {
     console.log("handle press");
     this.setState({
@@ -75,17 +87,15 @@ class App extends React.Component {
         coordinate: e.nativeEvent.coordinate,
         key: ++id
       },
+      landmarkVeiw: false
     });
-    
-    
-    // console.log("desLat", this.state.destinationMarker.coordinate.latitude)
-    // console.log("desLon", this.state.destinationMarker.coordinate.longitude)
   }
 
   componentDidMount() {
     const { coordinate } = this.state;
     console.log("componentdidmount start");
 
+    //get the current position function
     this.watchID = Geolocation.watchPosition(
       position => {
         const { routeCoordinates, distanceTravelled } = this.state;
@@ -116,8 +126,6 @@ class App extends React.Component {
             distanceTravelled + this.calcDistance(newCoordinate),
           prevLatLng: newCoordinate
         });
-        // console.log("oriLat", latitude)
-        // console.log("oriLon", longitude)
       },
       error => console.log(error),
       {
@@ -135,6 +143,7 @@ class App extends React.Component {
     console.log("componentwillunmount");
   }
 
+  //map view region adjusting function
   getMapRegion = () => ({
     latitude: this.state.latitude,
     longitude: this.state.longitude,
@@ -142,11 +151,13 @@ class App extends React.Component {
     longitudeDelta: this.state.latitudeDelta
   });
 
+  //user movement distant calcuating function
   calcDistance = newLatLng => {
     const { prevLatLng } = this.state;
     return haversine(prevLatLng, newLatLng) || 0;
   };
 
+  //region auto zoom function
   onLayout = () => { setTimeout(() => { 
     this.map.fitToCoordinates(this.state.receivedPathCoords,
       { edgePadding: { top: 500, right: 500, bottom: 500, left: 500 }, animated: true, }); 
@@ -160,8 +171,6 @@ class App extends React.Component {
         <MapView
           style={styles.map}
           ref={map => { this.map = map }}
-          // onMapReady={this.onLayout}
-          // onLayout={() => this.mapRef.fitToCoordinates([{ latitude: 6.79738, longitude: 79.90183 }, { latitude: 6.80128, longitude: 79.90113 }], { edgePadding: { top: 10, right: 10, bottom: 10, left: 10 }, animated: true })}
           provider={PROVIDER_GOOGLE}
           showUserLocation
           followUserLocation
@@ -175,16 +184,14 @@ class App extends React.Component {
               this.marker = marker;
             }}
             coordinate={this.state.coordinate}
-          />
+          >
+            {/* <Image source={require('./images/markers/mapMarker.png')} style={{ height: 35, width: 35 }} /> */}
+            </Marker.Animated>
           {(id > 0)
             ? [<Marker.Animated
               key={this.state.destinationMarker.key}
               coordinate={this.state.destinationMarker.coordinate}
             >
-              {/* <View style={styles.marker}>
-              <Text style={styles.text}>
-                {JSON.stringify(this.state.markers.coordinate)}</Text>
-            </View> */}
               <Image source={require('./images/markers/mapMarker.png')} style={{ height: 35, width: 35 }} />
             </Marker.Animated>,
             <Destination
@@ -197,6 +204,9 @@ class App extends React.Component {
             />]
             : null}
         </MapView>
+        <LandmarkButton
+          buttonClickProp={this.callBackButtonClick}
+        />
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={[styles.bubble, styles.button]}>
             <Text style={styles.bottomBarContent}>
@@ -210,6 +220,14 @@ class App extends React.Component {
               {JSON.stringify(this.state.routeCoordinates)}</Text>
           </TouchableOpacity>
         </View>
+        {(this.state.landmarkVeiw)
+          ? <View style={styles.buttonContainer}>
+            <TouchableOpacity style={[styles.bubble, styles.button]}>
+              <Text style={styles.bottomBarContent}>
+                Lanmark mode on</Text>
+            </TouchableOpacity>
+          </View>
+          :null}
       </View>
     );
   }
